@@ -1,9 +1,9 @@
-#include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include <array>
 #include <cassert>
@@ -33,19 +33,13 @@ struct socket_task {
 
       void return_void() {}
 
-      socket_task get_return_object()
-      {
-         return socket_task{std::coroutine_handle<promise_type>::from_promise(*this)};
-      }
+      socket_task get_return_object() { return socket_task{std::coroutine_handle<promise_type>::from_promise(*this)}; }
 
       std::suspend_always initial_suspend() noexcept { return {}; }
 
       std::suspend_always final_suspend() noexcept { return {}; }
 
-      void unhandled_exception()
-      {
-         exception_ = std::current_exception();
-      }
+      void unhandled_exception() { exception_ = std::current_exception(); }
    };
 
    ~socket_task()
@@ -65,13 +59,10 @@ struct socket_task {
    auto handle() { return handle_; }
 
 private:
-   explicit socket_task(handle_type h)
-      : handle_{h}
-   {}
+   explicit socket_task(handle_type h) : handle_{h} {}
 
    handle_type handle_;
 };
-
 
 struct connect_awaiter {
    int sock_handle;
@@ -79,10 +70,7 @@ struct connect_awaiter {
    const char* addr;
    const char* port;
 
-   bool await_ready() noexcept
-   {
-      return false;
-   }
+   bool await_ready() noexcept { return false; }
 
    void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept
    {
@@ -150,12 +138,7 @@ struct connect_awaiter {
 
 connect_awaiter async_connect(const char* addr, const char* port) noexcept
 {
-   return {
-      .sock_handle = -1,
-      .err = 0,
-      .addr = addr,
-      .port = port
-   };
+   return {.sock_handle = -1, .err = 0, .addr = addr, .port = port};
 }
 
 struct read_awaiter {
@@ -171,10 +154,7 @@ struct read_awaiter {
       return false;
    }
 
-   void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept
-   {
-      h.promise().read_handle_ = this;
-   }
+   void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept { h.promise().read_handle_ = this; }
 
    std::expected<int, int> await_resume() noexcept
    {
@@ -192,21 +172,12 @@ struct read_awaiter {
       }
    }
 
-   bool is_ready() noexcept
-   {
-      return num_bytes >= 0 || err != 0;
-   }
+   bool is_ready() noexcept { return num_bytes >= 0 || err != 0; }
 };
 
 read_awaiter async_read(int sock_handle, char* buffer, std::size_t buf_size) noexcept
 {
-   return {
-      .sock_handle = sock_handle,
-      .buffer = buffer,
-      .buf_size = buf_size,
-      .err = 0,
-      .num_bytes = 0
-   };
+   return {.sock_handle = sock_handle, .buffer = buffer, .buf_size = buf_size, .err = 0, .num_bytes = 0};
 }
 
 struct write_awaiter {
@@ -222,10 +193,7 @@ struct write_awaiter {
       return false;
    }
 
-   void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept
-   {
-      h.promise().write_handle_ = this;
-   }
+   void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept { h.promise().write_handle_ = this; }
 
    void retry_write() noexcept
    {
@@ -243,33 +211,24 @@ struct write_awaiter {
       return std::unexpected(err);
    }
 
-   bool is_ready() noexcept
-   {
-      return num_bytes >= 0 || err != 0;
-   }
+   bool is_ready() noexcept { return num_bytes >= 0 || err != 0; }
 };
 
 write_awaiter async_write(int sock_handle, const char* buffer, std::size_t buf_size) noexcept
 {
-   return write_awaiter{
-      .sock_handle = sock_handle,
-      .buffer = buffer,
-      .buf_size = buf_size,
-      .err = 0,
-      .num_bytes = 0
-   };
+   return write_awaiter{.sock_handle = sock_handle, .buffer = buffer, .buf_size = buf_size, .err = 0, .num_bytes = 0};
 }
 
 socket_task test_async()
 {
    const auto res = co_await async_connect("example.com", "80");
    if (res) {
-      const char get_request[] =
-         "GET / HTTP/1.1\r\n"
-         "Host: example.com\r\n"
-         "User-Agent: coroutine-test\r\n"
-         "Connection: keep-alive\r\n"
-         "\r\n";
+      const char get_request[]
+         = "GET / HTTP/1.1\r\n"
+           "Host: example.com\r\n"
+           "User-Agent: coroutine-test\r\n"
+           "Connection: close\r\n"
+           "\r\n";
       const auto res2 = co_await async_write(res.value(), get_request, std::size(get_request));
       if (res2) {
          std::array<char, 2048> buffer;

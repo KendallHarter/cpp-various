@@ -1,3 +1,9 @@
+# Build directories
+build*/
+
+# Settings, etc.
+compile_commands.json
+
 # Prerequisites
 *.d
 
