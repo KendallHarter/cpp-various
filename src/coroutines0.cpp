@@ -264,10 +264,15 @@ socket_task test_async()
 {
    const auto res = co_await async_connect("example.com", "80");
    if (res) {
-      const char get_request[] = "GET /\r\n\r\n";
+      const char get_request[] =
+         "GET / HTTP/1.1\r\n"
+         "Host: example.com\r\n"
+         "User-Agent: coroutine-test\r\n"
+         "Connection: keep-alive\r\n"
+         "\r\n";
       const auto res2 = co_await async_write(res.value(), get_request, std::size(get_request));
       if (res2) {
-         std::array<char, 1024> buffer;
+         std::array<char, 2048> buffer;
          const auto res3 = co_await async_read(res.value(), buffer.data(), buffer.size());
          if (res3) {
             std::cout.write(buffer.data(), res3.value());
