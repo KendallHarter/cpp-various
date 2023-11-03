@@ -315,7 +315,7 @@ inline void socket_scheduler(std::vector<socket_task>& tasks) noexcept
          poll_info.events = info.events_to_test;
          poll_infos.push_back(poll_info);
       }
-      poll(poll_infos.data(), poll_infos.size(), 1000);
+      poll(poll_infos.data(), poll_infos.size(), -1);
       for (std::size_t i = 0; i < poll_infos.size(); ++i) {
          const auto& poll_info = poll_infos[i];
          const auto info = tasks[i].get_sock_info();
