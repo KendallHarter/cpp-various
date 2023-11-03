@@ -3,6 +3,7 @@ build*/
 
 # Settings, etc.
 compile_commands.json
+.vscode/
 
 # Prerequisites
 *.d

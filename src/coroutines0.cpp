@@ -85,7 +85,7 @@ struct connect_awaiter {
          err = resaddr;
       }
       else {
-         // This only considers the first addresss that doesn't fail right away
+         // This only considers the first address that doesn't fail right away
          // Changing that is an issue that will not be solved
          for (auto ptr = result; ptr; ptr = ptr->ai_next) {
             sock_handle = ::socket(ptr->ai_family, ptr->ai_socktype | SOCK_NONBLOCK, ptr->ai_protocol);
