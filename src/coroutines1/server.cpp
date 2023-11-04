@@ -50,8 +50,8 @@ int main(int argc, const char* argv[])
       return 2;
    }
    const auto port_no = std::atoi(argv[1]);
-   if (port_no == 0) {
-      std::cerr << "Erro parsing port number\n";
+   if (port_no <= 0) {
+      std::cerr << "Error parsing port number\n";
       return 2;
    }
 

@@ -66,7 +66,7 @@ int main(int argc, const char* argv[])
    }
 
    const auto port_no_test = std::atoi(argv[1]);
-   if (port_no_test == 0) {
+   if (port_no_test <= 0) {
       std::cerr << "Error converting port number\n";
       return 2;
    }
