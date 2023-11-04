@@ -9,7 +9,7 @@ socket_task server_task(int sock_handle)
       // Read 1 byte that's the number of bytes to read
       char bytes_to_read_raw;
       const auto res1 = co_await async_read(sock_handle, &bytes_to_read_raw, 1);
-      if (!res1) {
+      if (!res1 || res1.value() == 0) {
          co_return;
       }
 

@@ -12,6 +12,7 @@ socket_task client_loop(const char* port_no)
    const auto res = co_await async_connect("localhost", port_no);
    if (!res) {
       std::cerr << "Connect failed\n";
+      perror(nullptr);
       co_return;
    }
 

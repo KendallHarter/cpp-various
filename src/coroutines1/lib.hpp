@@ -25,7 +25,7 @@ struct socket_task {
    using handle_type = std::coroutine_handle<promise_type>;
 
    struct socket_info {
-      short events_to_test;
+      short events_to_test = 0;
       int handle = -1;
    };
 
@@ -149,6 +149,10 @@ auto async_connect(const char* addr, const char* port) noexcept
 
       std::expected<int, int> await_resume() noexcept
       {
+         if (err == 0) {
+            socklen_t errsize = sizeof(err);
+            getsockopt(sock_handle, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&err), &errsize);
+         }
          if (err == 0) {
             return sock_handle;
          }
@@ -308,21 +312,27 @@ inline void socket_scheduler(std::vector<socket_task>& tasks) noexcept
 {
    while (!tasks.empty()) {
       std::vector<pollfd> poll_infos;
+      bool should_poll = false;
       for (const auto& task : tasks) {
          const auto info = task.get_sock_info();
          pollfd poll_info;
          poll_info.fd = info.handle;
          poll_info.events = info.events_to_test;
+         if (info.events_to_test != 0) {
+            should_poll = true;
+         }
          poll_infos.push_back(poll_info);
       }
-      poll(poll_infos.data(), poll_infos.size(), -1);
-      for (std::size_t i = 0; i < poll_infos.size(); ++i) {
-         const auto& poll_info = poll_infos[i];
-         const auto info = tasks[i].get_sock_info();
-         if (
-            (poll_info.revents & info.events_to_test) != 0 || (poll_info.revents & POLLERR) != 0
-            || (poll_info.revents & POLLHUP) != 0 || (poll_info.revents & POLLNVAL) != 0) {
-            tasks[i].resume();
+      if (should_poll) {
+         poll(poll_infos.data(), poll_infos.size(), -1);
+         for (std::size_t i = 0; i < poll_infos.size(); ++i) {
+            const auto& poll_info = poll_infos[i];
+            const auto info = tasks[i].get_sock_info();
+            if (
+               (poll_info.revents & info.events_to_test) != 0 || (poll_info.revents & POLLERR) != 0
+               || (poll_info.revents & POLLHUP) != 0 || (poll_info.revents & POLLNVAL) != 0) {
+               tasks[i].resume();
+            }
          }
       }
       std::erase_if(tasks, [](const auto& task) { return task.done(); });
