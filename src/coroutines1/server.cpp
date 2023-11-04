@@ -61,6 +61,10 @@ int main(int argc, const char* argv[])
       std::cerr << "Creating socket failed\n";
       return 1;
    }
+   // set no delay
+   int enable = 1;
+   setsockopt(listen_socket, IPPROTO_TCP, TCP_NODELAY, &enable, sizeof(enable));
+
    sockaddr_in addr;
    std::memset(&addr, 0, sizeof(addr));
    addr.sin_family = AF_INET;

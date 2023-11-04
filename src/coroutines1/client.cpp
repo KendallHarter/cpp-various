@@ -16,6 +16,10 @@ socket_task client_loop(const char* port_no)
       co_return;
    }
 
+   // set no delay
+   int enable = 1;
+   setsockopt(res.value(), IPPROTO_TCP, TCP_NODELAY, &enable, sizeof(enable));
+
    std::cout << "connected with " << res.value() << '\n';
 
    while (true) {
