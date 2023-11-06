@@ -23,7 +23,7 @@ socket_task client_loop(const char* port_no)
    std::cout << "connected with " << res.value() << '\n';
 
    while (true) {
-      // Generate a random amount of bytes to write2
+      // Generate a random amount of bytes to write
       const auto start_time = std::chrono::steady_clock::now();
       const char num_bytes_to_write = std::uniform_int_distribution<unsigned char>{1, 100}(prng);
       const auto res2 = co_await async_write(res.value(), &num_bytes_to_write, 1);
