@@ -22,19 +22,8 @@ struct node {
    std::unique_ptr<node> right;
 };
 
-node create_tree(std::span<std::uint8_t> data) noexcept
+node create_tree(std::array<std::uint64_t, 256>& data_counts) noexcept
 {
-   // Count data
-   std::array<std::uint64_t, 256> data_counts;
-   std::ranges::fill(data_counts, 0);
-   for (const auto c : data) {
-      data_counts[c] += 1;
-      if (data_counts[c] == 0) {
-         std::cerr << "std::uint64_t overflowed, exiting.\n";
-         std::exit(1);
-      }
-   }
-
    // Create tree
    // We can't use priority_queue because top() only returns by const reference...
    std::vector<node> node_queue;
@@ -103,22 +92,34 @@ std::size_t build_raw_tree(const node& n, std::vector<std::uint16_t>& raw_tree) 
 
 int main(int argc, const char* argv[])
 {
-   if (argc != 4) {
-      std::cerr << "Usage:\n" << argv[0] << " input_file json_output raw_tree_output\n";
+   if (argc < 4) {
+      std::cerr << "Usage:\n" << argv[0] << " json_output raw_tree_output input_files...\n";
       return 2;
    }
-   std::ifstream fin{argv[1], std::ios::binary};
-   fin.seekg(0, std::ios::end);
-   const auto size = fin.tellg();
-   fin.seekg(0);
-   std::vector<std::uint8_t> data;
-   data.resize(size);
-   fin.read(reinterpret_cast<char*>(data.data()), size);
-   const auto tree = create_tree(data);
+   std::array<std::uint64_t, 256> data_counts;
+   std::ranges::fill(data_counts, 0);
+   for (int i = 3; i < argc; ++i) {
+      std::ifstream fin{argv[i], std::ios::binary};
+      fin.seekg(0, std::ios::end);
+      const auto size = fin.tellg();
+      fin.seekg(0);
+      std::vector<std::uint8_t> data;
+      data.resize(size);
+      fin.read(reinterpret_cast<char*>(data.data()), size);
+
+      for (const auto c : data) {
+         data_counts[c] += 1;
+         if (data_counts[c] == 0) {
+            std::cerr << "std::uint64_t overflowed, exiting.\n";
+            std::exit(1);
+         }
+      }
+   }
+   const auto tree = create_tree(data_counts);
    std::map<std::uint64_t, std::string> mapping;
    build_mapping(tree, mapping);
 
-   std::ofstream json_out{argv[2]};
+   std::ofstream json_out{argv[1]};
    json_out << '{';
    bool comma = false;
    for (const auto& [key, value] : mapping) {
@@ -137,7 +138,7 @@ int main(int argc, const char* argv[])
    //    If the top-most bit is not set, the low 15-bits are the offset to the right child
    //    The left child is always one integer ahead
    // The format is little-endian (technically platform native)
-   std::ofstream tree_out{argv[3], std::ios::binary};
+   std::ofstream tree_out{argv[2], std::ios::binary};
    std::vector<std::uint16_t> raw_tree;
    build_raw_tree(tree, raw_tree);
    tree_out.write(reinterpret_cast<const char*>(raw_tree.data()), raw_tree.size() * 2);
