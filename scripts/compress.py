@@ -15,7 +15,7 @@ def emit_byte(iterable, file_handle):
 
 def main():
    if len(sys.argv) != 4:
-      print(f'Usage:\n{sys.argv[0]} json_encoding file_to_compress file_to_save_to')
+      sys.exit(f'Usage:\n{sys.argv[0]} json_encoding file_to_compress file_to_save_to')
 
    with open(sys.argv[1]) as f:
       tree = json.load(f)
