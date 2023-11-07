@@ -34,12 +34,13 @@ def main():
          emit_byte(byte, f)
 
       remaining = len(to_emit) % 8
-      last_byte = to_emit[-remaining:]
+      if remaining != 0:
+         last_byte = to_emit[-remaining:]
 
-      while len(last_byte) != 8:
-         last_byte += '0'
+         while len(last_byte) != 8:
+            last_byte += '0'
 
-      emit_byte(last_byte, f)
+         emit_byte(last_byte, f)
 
 
 if __name__ == '__main__':
