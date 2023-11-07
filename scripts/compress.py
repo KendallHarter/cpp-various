@@ -9,7 +9,7 @@ def emit_byte(iterable, file_handle):
    to_write = 0
    for val in iterable:
       to_write <<= 1
-      if val:
+      if val == '1':
          to_write += 1
    file_handle.write(to_write.to_bytes(1, 'little'))
 

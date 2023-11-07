@@ -18,6 +18,7 @@ add_executable(coroutines0 src/coroutines0.cpp)
 add_executable(coroutines1_client src/coroutines1/client.cpp)
 add_executable(coroutines1_server src/coroutines1/server.cpp)
 add_executable(huffman_encoding src/huffman_encoding.cpp)
+add_executable(huffman_decoding src/huffman_decoding.cpp)
 
 add_executable(modules_test src/modules/main.cpp)
 target_sources(modules_test PRIVATE
