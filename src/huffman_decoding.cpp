@@ -34,7 +34,6 @@ struct bit_reader {
       const auto to_output = current & 0b1000'0000;
       current <<= 1;
       num_bits -= 1;
-      std::cout << to_output << '\n';
       return to_output;
    }
 
@@ -74,9 +73,7 @@ int main(int argc, const char* argv[])
             decode_loc += 1;
          }
       }
-      std::cout << decode_loc << '\n';
       const std::uint8_t to_write = tree[decode_loc] & 0x7FFF;
       fout.write(reinterpret_cast<const char*>(&to_write), 1);
    }
-   std::cout << reader.current_loc << '\n';
 }
