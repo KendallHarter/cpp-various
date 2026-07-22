@@ -1,6 +1,7 @@
 #include "lib.hpp"
 
 #include <csignal>
+#include <iostream>
 #include <vector>
 
 socket_task server_task(int sock_handle)

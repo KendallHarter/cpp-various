@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <csignal>
+#include <iostream>
 #include <random>
 #include <vector>
 

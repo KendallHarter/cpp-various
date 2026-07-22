@@ -11,12 +11,12 @@
 
 #include <array>
 #include <cassert>
+#include <cerrno>
 #include <coroutine>
 #include <cstdint>
 #include <cstring>
 #include <exception>
 #include <expected>
-#include <iostream>
 #include <vector>
 
 struct socket_task {
@@ -36,9 +36,7 @@ struct socket_task {
       void return_void() noexcept {}
 
       socket_task get_return_object() noexcept
-      {
-         return socket_task{std::coroutine_handle<promise_type>::from_promise(*this)};
-      }
+      { return socket_task{std::coroutine_handle<promise_type>::from_promise(*this)}; }
 
       std::suspend_never initial_suspend() noexcept { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
@@ -102,7 +100,9 @@ auto async_connect(const char* addr, const char* port) noexcept
       {
          addrinfo hints;
          std::memset(&hints, 0, sizeof(hints));
-         hints.ai_family = AF_UNSPEC;
+         // only check IPv4 addresses - AF_UNSPEC can cause an IPv6 address as the first address and
+         // the server is only IPv4
+         hints.ai_family = AF_INET;
          hints.ai_socktype = SOCK_STREAM;
          hints.ai_protocol = IPPROTO_IP;
          addrinfo* result;
@@ -143,9 +143,7 @@ auto async_connect(const char* addr, const char* port) noexcept
       }
 
       void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept
-      {
-         h.promise().sock_info_ = {POLLOUT, sock_handle};
-      }
+      { h.promise().sock_info_ = {POLLOUT, sock_handle}; }
 
       std::expected<int, int> await_resume() noexcept
       {
@@ -173,9 +171,7 @@ auto async_read(int sock_handle, char* buffer, std::size_t buf_size) noexcept
       bool await_ready() noexcept { return try_read(); }
 
       void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept
-      {
-         h.promise().sock_info_ = {POLLIN, sock_handle};
-      }
+      { h.promise().sock_info_ = {POLLIN, sock_handle}; }
 
       std::expected<int, int> await_resume() noexcept
       {
@@ -219,9 +215,7 @@ auto async_write(int sock_handle, const char* buffer, std::size_t buf_size) noex
       bool await_ready() noexcept { return try_write(); }
 
       void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept
-      {
-         h.promise().sock_info_ = {POLLOUT, sock_handle};
-      }
+      { h.promise().sock_info_ = {POLLOUT, sock_handle}; }
 
       std::expected<int, int> await_resume() noexcept
       {
@@ -265,9 +259,7 @@ auto async_accept(int sock_handle) noexcept
       bool await_ready() noexcept { return try_accept(); }
 
       void await_suspend(std::coroutine_handle<socket_task::promise_type> h) noexcept
-      {
-         h.promise().sock_info_ = {POLLIN, sock_handle};
-      }
+      { h.promise().sock_info_ = {POLLIN, sock_handle}; }
 
       std::expected<int, int> await_resume() noexcept
       {
@@ -285,7 +277,7 @@ auto async_accept(int sock_handle) noexcept
       bool try_accept() noexcept
       {
          new_socket_handle = accept(sock_handle, nullptr, nullptr);
-         if (new_socket_handle < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+         if (new_socket_handle < 0 && (errno != EAGAIN || errno != EWOULDBLOCK)) {
             err = errno;
             accept_done = true;
             return true;
